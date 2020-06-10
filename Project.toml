@@ -1,7 +1,10 @@
 name = "ElasticAnisotropy"
 uuid = "3326e1e4-db03-44ec-a3cf-c4c0989cef06"
 authors = ["joerg <joerg.buchwald@ufz.de> and contributors"]
-version = "0.1.0"
+version = "0.2.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
 julia = "1"

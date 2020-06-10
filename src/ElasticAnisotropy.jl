@@ -1,5 +1,9 @@
 module ElasticAnisotropy
 
+export getRmatrix, OrthoModel, rotateTensor, Tensor2VoigtMatrix, VoigtMatrix2Tensor, generateVoigtMatrix
+
+using LinearAlgebra
+
 struct OrthoModel
     E_i::Float64
     E_a::Float64
@@ -8,10 +12,11 @@ struct OrthoModel
     G_a::Float64
 end
 
+
 function generateVoigtMatrix(X::OrthoModel)
     G_i = X.E_i / (2.0*(1. + X.ν_i))
     ν_ai = X.ν_ia * X.E_a / X.E_i
-    D = ((1.0+X.ν_i)*(1.0-X.ν_i-2*X.ν_ia * X.ν_ai))/(X.E_i^2*X.E_a)
+    D = ((1.0+X.ν_i)*(1.0-X.ν_i-2*X.ν_ia * ν_ai))/(X.E_i^2*X.E_a)
     a_ii = (1-X.ν_ia*ν_ai)/(X.E_i*X.E_a*D)
     a_ai = (1-X.ν_i^2)/(X.E_i^2*D)
     b_ii = (X.ν_i+X.ν_ia*ν_ai)/(X.E_i*X.E_a*D)
@@ -84,7 +89,17 @@ function transform_tensor(c,R,i,j,k,l)
     return c_new
 end
 
-function rotateTensor(cijkl, v::Vector)
+function getRmatrix(n)
+    e3 = [n[1], n[2], n[3]]
+    e1 = [n[3]/(n[1]*sqrt(1+(n[3]/n[1])^2)), 0, -1.0/sqrt(1+(n[3]/n[1])^2)]
+    e2 = cross(e3,e1)
+    R = [e1[1] e1[2] e1[3]; e2[1] e2[2] e2[3]; e3[1] e3[2] e3[3]]
+    return R
+end
+
+
+
+function rotateTensor(cijkl, n::Array{Float64,1})
     function getRmatrix(n)
         e3 = [n[1], n[2], n[3]]
         e1 = [n[3]/(n[1]*sqrt(1+(n[3]/n[1])^2)), 0, -1.0/sqrt(1+(n[3]/n[1])^2)]
@@ -97,7 +112,7 @@ function rotateTensor(cijkl, v::Vector)
 end
 
 
-function rotateTensor(cijkl, R::Array)
+function rotateTensor(cijkl, R::Array{Float64,2})
     cijkl_new=zeros((3,3,3,3));
     for i in 1:3
         for j in 1:3
@@ -114,11 +129,11 @@ end
 function Tensor2VoigtMatrix(cijkl)
     C_new = zeros(6,6)
     for j in 1:6
-        C_new[i,j] = getCij(cijkl_new,i,j)
+        for i in 1:6
+            C_new[i,j] = getCij(cijkl,i,j)
+        end
     end
     return C_new
 end
 
 end
-
-export  rotateTensor, Tensor2VoigtMatrix, VoigtMatrix2Tensor, generateVoigtMatrix
