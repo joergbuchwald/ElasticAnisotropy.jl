@@ -5,25 +5,35 @@ export getRmatrix, OrthoModel, rotateTensor, Tensor2VoigtMatrix, VoigtMatrix2Ten
 using LinearAlgebra
 
 struct OrthoModel
-    E_i::Float64
-    E_a::Float64
-    ν_i::Float64
-    ν_ia::Float64
-    G_a::Float64
+    moduli::NamedTuple{(:E_i,:E_a,:ν_i,:ν_ia,:G_a), Tuple{Float64,Float64,Float64,Float64,Float64}}
 end
 
+struct IsoModel
+    moduli::NamedTuple{(:E,:ν), Tuple{Float64,Float64}}
+end
 
-function generateVoigtMatrix(X::OrthoModel)
-    G_i = X.E_i / (2.0*(1. + X.ν_i))
-    ν_ai = X.ν_ia * X.E_a / X.E_i
-    D = ((1.0+X.ν_i)*(1.0-X.ν_i-2*X.ν_ia * ν_ai))/(X.E_i^2*X.E_a)
-    a_ii = (1-X.ν_ia*ν_ai)/(X.E_i*X.E_a*D)
-    a_ai = (1-X.ν_i^2)/(X.E_i^2*D)
-    b_ii = (X.ν_i+X.ν_ia*ν_ai)/(X.E_i*X.E_a*D)
-    b_ai = (X.ν_ia*(1+X.ν_i))/(X.E_i^2*D)
-    c_ii = X.E_i/(2*(1+X.ν_i))
-    c_ai = X.G_a
+function generateVoigtMatrix(p::OrthoModel)
+    E_i, E_a, ν_i, ν_ia, G_a = p.moduli
+    G_i = E_i / (2.0*(1. + ν_i))
+    ν_ai = ν_ia * E_a / E_i
+    D = ((1.0+ν_i)*(1.0-ν_i-2*ν_ia * ν_ai))/(E_i^2*E_a)
+    a_ii = (1-ν_ia*ν_ai)/(E_i*E_a*D)
+    a_ai = (1-ν_i^2)/(E_i^2*D)
+    b_ii = (ν_i+ν_ia*ν_ai)/(E_i*E_a*D)
+    b_ai = (ν_ia*(1+ν_i))/(E_i^2*D)
+    c_ii = E_i/(2*(1+ν_i))
+    c_ai = G_a
     C = [a_ii b_ii b_ai 0 0 0; b_ii a_ii b_ai 0 0 0; b_ai b_ai a_ai 0 0 0; 0 0 0 c_ai 0 0; 0 0 0 0 c_ai 0; 0 0 0 0 0 c_ii]
+    return C
+end
+
+function generateVoigtMatrix(p::IsoModel)
+    E, ν = p.moduli
+    prefac = E/((1+ν)*(1-2*ν))
+    a_ii = 1-ν
+    a_ij = ν
+    b_ii = (1-2*ν)/2
+    C = prefac * [a_ii a_ij a_ij 0 0 0; a_ij a_ii a_ij 0 0 0; a_ij a_ij a_ii 0 0 0; 0 0 0 b_ii 0 0; 0 0 0 0 b_ii 0; 0 0 0 0 0 b_ii]
     return C
 end
 
