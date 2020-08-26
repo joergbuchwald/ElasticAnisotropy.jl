@@ -33,7 +33,7 @@ function generateVoigtMatrix(p::IsoModel)
     a_ii = 1-ν
     a_ij = ν
     b_ii = (1-2*ν)/2
-    C = prefac * [a_ii a_ij a_ij 0 0 0; a_ij a_ii a_ij 0 0 0; a_ij a_ij a_ii 0 0 0; 0 0 0 b_ii 0 0; 0 0 0 0 b_ii 0; 0 0 0 0 0 b_ii]
+    C = prefac .* [a_ii a_ij a_ij 0 0 0; a_ij a_ii a_ij 0 0 0; a_ij a_ij a_ii 0 0 0; 0 0 0 b_ii 0 0; 0 0 0 0 b_ii 0; 0 0 0 0 0 b_ii]
     return C
 end
 
