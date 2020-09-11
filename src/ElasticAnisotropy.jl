@@ -1,10 +1,14 @@
 module ElasticAnisotropy
 
-export getRmatrix, OrthoModel, rotateTensor, Tensor2VoigtMatrix, VoigtMatrix2Tensor, generateVoigtMatrix
+export getRmatrix, OrthoModel, TransIsomodel, IsoModel, rotateTensor, Tensor2VoigtMatrix, VoigtMatrix2Tensor, generateVoigtMatrix
 
 using LinearAlgebra
 
 struct OrthoModel
+    moduli::NamedTuple{(:E_1, :E_2, :E_3, :ν_12, :ν_23, :ν_13, :G_12, :G_23, :G_13), Tuple{Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64}}
+end
+
+struct TransIsoModel
     moduli::NamedTuple{(:E_i,:E_a,:ν_i,:ν_ia,:G_a), Tuple{Float64,Float64,Float64,Float64,Float64}}
 end
 
@@ -13,6 +17,16 @@ struct IsoModel
 end
 
 function generateVoigtMatrix(p::OrthoModel)
+    E_1, E_2, E_3, ν_12, ν_23, ν_13, G_12, G_23, G_13 = p.moduli
+    ν_21 = ν_12 * E_2 / E_1
+    ν_32 = ν_23 * E_3 / E_2
+    ν_31 = ν_13 * E_3 / E_1
+    D = (1 - ν_12*ν_21-ν_23*ν_32-ν_31*ν_13-2*ν_12*ν_23*ν_31)/(E_1 * E_2 * E_3)
+    C = [(1-ν_23*ν_32)/(E_2*E_3*D) (ν_21+ν_31*ν_23)/(E_2*E_3*D) (ν_31+ν_21*ν_32)/(E_2*E_3*D) 0 0 0; (ν_12+ν_13*ν_32)/(E_1*E_3*D) (1-ν_31*ν_13)/(E_1*E_3*D) (ν_32+ν_31*ν_12)/(E_1*E_3*D) 0 0 0; (ν_13+ν_12*ν_23)/(E_12*E_2*D) (ν_23+ν_13*ν_21)/(E_1*E_2*D) (1-ν_12*ν_21)/(E_1*E_2*D) 0 0 0; 0 0 0 G_23 0 0; 0 0 0 0 G_31 0; 0 0 0 0 0 G_12]
+    return C
+end
+
+function generateVoigtMatrix(p::TransIsoModel)
     E_i, E_a, ν_i, ν_ia, G_a = p.moduli
     G_i = E_i / (2.0*(1. + ν_i))
     ν_ai = ν_ia * E_a / E_i
